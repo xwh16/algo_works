@@ -1,5 +1,5 @@
-#include <math.h>
-#include <assert.h>
+#include <cmath>
+#include <cassert>
 #include <cstdio>
 #include <vector>
 #include <algorithm>
@@ -13,7 +13,6 @@ vector<float> b;         // the demands for volunteers
 vector<float> c;         // the recruit fee for volunteers
 vector<vector<float> > A; // the available shedule (N x M) for volunteers
 vector<unsigned int> Bv; // the basis vector
-vector<unsigned int> Nv; // the non-basis vector
 
 void print_table()
 {
@@ -63,10 +62,11 @@ inline int pivot(int e, int l)
     unsigned int i, j;
     // 1. 将A[l][e]变为单位1
     //    Scaling缩放操作
-    b[l] = b[l] / A[l][e];
+    float Ale = A[l][e];    // 暂存A[l][e]
+    b[l] = b[l] / Ale;
     for (j = 0; j < A[l].size(); j++)
     {
-        A[l][j] = A[l][j] / A[l][e];
+        A[l][j] = A[l][j] / Ale;
     }
     // 2. A中其余行减去A[i][e]*Aj消元
     for (i=0; i<A.size(); i++)
@@ -125,7 +125,7 @@ int do_simplex()
             if (A[i][e] > 0)
             {
                 tmp = b[i]/A[i][e];
-                if (tmp < theta && theta != 0)
+                if (tmp < theta)
                 {
                     theta = tmp;
                     l = i;
@@ -143,7 +143,7 @@ int init_simplex()
 {
     // 初始化稀疏矩阵
     unsigned int i, j;
-    for (i = 0; i < N; i++)
+    for (i = 0; i < A.size(); i++)
     {
         A[i].resize(M + N, 0);
         A[i][M + i] = 1;
@@ -154,15 +154,11 @@ int init_simplex()
     {
         Bv.push_back(i);
     }
-    // 非基向量
-    for (i = 0; i < M; i++)
-    {
-        Nv.push_back(i);
-    }
+    
     // 首先找到约束集中b最小的项
     unsigned int l; // l标记最小项下标
     float min_b = 0;
-    for (i = 1; i < b.size(); i++)
+    for (i = 0; i < b.size(); i++)
     {
         if (b[i] < min_b)
         {
@@ -185,18 +181,17 @@ int init_simplex()
     {
         vector<float> c_original;
         // 构造辅助L_aux
-        for (i = 0; i < N; i++)
+        for (i = 0; i < A.size(); i++)
         {
             // 增加-x0项至末尾
             A[i].push_back(-1);
         }
-        Nv.push_back(N); // 这里使用xN表示新加入的非基变量
         // 替换L_aux的目标函数
         c_original.resize(M + N + 1, 0);
         c_original[M+N] = 1;
         c.swap(c_original);
         // 执行一次pivot操作使约束条件大于0
-        pivot(M+N, l);  // l是Bv中的序号!
+        pivot(M+N, l);  // l是行号
         // Simplex求解
         assert(do_simplex() == 0);
         // 检查L_aux的值
@@ -242,6 +237,8 @@ int simplex()
 
     // printf("Solving Simplex.\n");
     assert(do_simplex() == 0);
+
+    return (-1.0 * z);
 }
 
 int main()
@@ -262,15 +259,14 @@ int main()
         unsigned int Si, Fi, Ci;
         scanf("%d %d %d", &Si, &Fi, &Ci);
         c[i] = Ci;
-        for (d = Si - 1; d <= Fi - 1; d++)
+        assert(Fi <= N);
+        for (d = Si - 1; d < Fi && d < N; d++)  // TODO: ??? 啥玩意
         {
             A[d][i] = -1;
         }
     }
 
-    simplex();
-
-    printf("%.0f\n", -1.0 * z);
+    printf("%.0f\n", abs((float)simplex()));
 
     return 0;
 }

@@ -10,4 +10,4 @@ task1: task1.o
 
 clean:
 	$(RM) *.o
-	$(RM) task1
+	$(RM) *.out
