@@ -259,7 +259,6 @@ int main()
         unsigned int Si, Fi, Ci;
         scanf("%d %d %d", &Si, &Fi, &Ci);
         c[i] = Ci;
-        assert(Fi <= N);
         for (d = Si - 1; d < Fi && d < N; d++)  // TODO: ??? 啥玩意
         {
             A[d][i] = -1;
